@@ -10,6 +10,9 @@ import urllib2
 from PIL import Image
 import multipart
 
+# read person data
+import csv
+
 # standard app engine imports
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
@@ -51,6 +54,48 @@ def getEnabled(chat_id):
 
 # ================================
 
+class Person(ndb.Model):
+    position = ndb.IntegerProperty()
+    orientationGroup = ndb.StringProperty()
+    name = ndb.StringProperty()
+    nickName = ndb.StringProperty()
+    internalJobTitle = ndb.StringProperty()
+    groupName = ndb.StringProperty()
+    regCode = ndb.StringProperty()
+    gender = ndb.StringProperty()
+    originCity = ndb.StringProperty()
+    originProvince = ndb.StringProperty()
+    originStreet = ndb.StringProperty()
+    ethnicity = ndb.StringProperty()
+    marriageStatus = ndb.StringProperty()
+    birthPlace = ndb.StringProperty()
+    birthDate = ndb.StringProperty()
+    citizenId = ndb.StringProperty()
+    mobileNumber = ndb.StringProperty()
+    whatsappNumber = ndb.StringProperty()
+    email = ndb.StringProperty()
+    lineId = ndb.StringProperty()
+    twitterScreenName = ndb.StringProperty()
+    instagramScreenName = ndb.StringProperty()
+    currentCity = ndb.StringProperty()
+    currentProvince = ndb.StringProperty()
+    currentStreet = ndb.StringProperty()
+    jobTitle = ndb.StringProperty()
+    resignDate = ndb.StringProperty()
+    prevProgramSchool = ndb.StringProperty()
+    prevProgramCountry = ndb.StringProperty()
+    prevProgramCity = ndb.StringProperty()
+    prevProgramName = ndb.StringProperty()
+    nextProgramSchool = ndb.StringProperty()
+    nextProgramCountry = ndb.StringProperty()
+    nextProgramCity = ndb.StringProperty()
+    nextProgramName = ndb.StringProperty()
+    scholarshipKind = ndb.StringProperty()
+    admissionDate = ndb.StringProperty()
+    expectedGraduationDate = ndb.StringProperty()
+    departureDate = ndb.StringProperty()
+    visaStatus = ndb.StringProperty()
+
 class MeHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
@@ -69,6 +114,108 @@ class SetWebhookHandler(webapp2.RequestHandler):
         url = self.request.get('url')
         if url:
             self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'setWebhook', urllib.urlencode({'url': url})))))
+
+
+class ExportPersonHandler(webapp2.RequestHandler):
+    def get(self):
+        q = Person.query()
+        rows = []
+        for person in q.fetch(5):
+            rows.append(person)
+        logging.info("Persons: %s" % rows)
+        self.response.headers['Content-Type'] = 'text/plain'   
+        self.response.write(rows)
+
+class WhoisHandler(webapp2.RequestHandler):
+    def get(self):
+        q = self.request.get('q').lower()
+        if len(q) < 4:
+            raise RuntimeError("Search term must be at least 4 characters")
+        query = Person.query()
+        rows = []
+        resp_string = ""
+        for person in query.fetch(200):
+            if q in person.name.lower():
+                rows.append(person)
+                logging.info("Matched Person: %s" % person)
+                s = """{name}
+Kelompok: {groupName}
+No. Reg: {regCode}
+Jenis Kelamin: {gender}
+Asal: {originCity}, {originProvince}
+Status: {marriageStatus}
+Kelahiran: {birthPlace}, {birthDate}
+No. HP: {mobileNumber} / {whatsappNumber}
+Email: {email}
+Line: {lineId}
+Twitter: {twitterScreenName}
+Instagram: {instagramScreenName}
+Domisili: {currentCity}, {currentProvince}
+Pekerjaan: {jobTitle}
+Universitas Asal: {prevProgramName}, {prevProgramSchool}, {prevProgramCity}, {prevProgramCountry}
+Universitas Tujuan: {nextProgramName}, {nextProgramSchool}, {nextProgramCity}, {nextProgramCountry}
+Beasiswa: {scholarshipKind}""".format(**person.to_dict())
+                resp_string += s + "\n\n"
+        self.response.headers['Content-Type'] = 'text/plain'   
+        self.response.write(resp_string)
+
+class ImportPersonHandler(webapp2.RequestHandler):
+    def post(self):
+        # person_keys = Person.all(keys_only=True).fetch(1000)
+        # logging.info('Deleting all Person: %s' % person_keys)
+        # ndb.delete(person_keys)
+
+        csvs = self.request.get('csv')
+        csvf = StringIO.StringIO(csvs)
+        # logging.info(csvs)
+        reader = csv.reader(csvf)
+        next(reader) # skip header
+        logging.info('Importing Person ...')
+        my_list = list(reader)
+        resp = {"csv": []}
+        for row in my_list:
+            person = Person(
+#                 position=row[0],
+                orientationGroup=row[1],
+                name=row[2], 
+                nickName=row[3],
+                internalJobTitle=row[4],
+                groupName=row[5],
+                regCode=row[6],
+                gender=row[7],
+                originCity=row[8],
+                originProvince=row[9],
+                originStreet=row[10],
+                ethnicity=row[11],
+                marriageStatus=row[12],
+                birthPlace=row[13],
+                birthDate=row[14],
+                citizenId=row[15],
+                mobileNumber=row[16],
+                whatsappNumber=row[17],
+                email=row[18],
+                lineId=row[19],
+                twitterScreenName=row[20],
+                instagramScreenName=row[21],
+                currentCity=row[22],
+                currentProvince=row[23],
+                currentStreet=row[24],
+                jobTitle=row[25],
+                resignDate=row[26],
+                prevProgramSchool=row[27],
+                prevProgramCountry=row[28],
+                prevProgramCity=row[29],
+                prevProgramName=row[30],
+                nextProgramSchool=row[31],
+                nextProgramCountry=row[32],
+                nextProgramCity=row[33],
+                nextProgramName=row[34],
+                scholarshipKind=row[35],
+                admissionDate=row[36])
+            logging.info("Adding: %s" % person)
+            person.put()
+        logging.info("Added all Person")
+        self.response.write(json.dumps(resp))
 
 
 class WebhookHandler(webapp2.RequestHandler):
@@ -132,6 +279,36 @@ class WebhookHandler(webapp2.RequestHandler):
                 output = StringIO.StringIO()
                 img.save(output, 'JPEG')
                 reply(img=output.getvalue())
+            elif text.startswith('/whois ') or text.startswith('/whois@'):
+                q = text.split(' ', 1)[1].lower()
+                if len(q) < 4:
+                    reply("Search term must be at least 4 characters")
+                else:
+                    query = Person.query()
+                    rows = []
+                    for person in query.fetch(200):
+                        if q in person.name.lower():
+                            rows.append(person)
+                            logging.debug("Matched person: %s" % person)
+                    for person in rows:
+                        s = """{name}
+Kelompok: {groupName}
+No. Reg: {regCode}
+Jenis Kelamin: {gender}
+Asal: {originCity}, {originProvince}
+Status: {marriageStatus}
+Kelahiran: {birthPlace}, {birthDate}
+No. HP: {mobileNumber} / {whatsappNumber}
+Email: {email}
+Line: {lineId}
+Twitter: {twitterScreenName}
+Instagram: {instagramScreenName}
+Domisili: {currentCity}, {currentProvince}
+Pekerjaan: {jobTitle}
+Universitas Asal: {prevProgramName}, {prevProgramSchool}, {prevProgramCity}, {prevProgramCountry}
+Universitas Tujuan: {nextProgramName}, {nextProgramSchool}, {nextProgramCity}, {nextProgramCountry}
+Beasiswa: {scholarshipKind}""".format(**person.to_dict())
+                        reply(s)
             else:
                 reply('What command?')
 
@@ -153,4 +330,7 @@ app = webapp2.WSGIApplication([
     ('/updates', GetUpdatesHandler),
     ('/set_webhook', SetWebhookHandler),
     ('/webhook', WebhookHandler),
+    ('/import_person', ImportPersonHandler),
+    ('/export_person', ExportPersonHandler),
+    ('/whois', WhoisHandler),
 ], debug=True)

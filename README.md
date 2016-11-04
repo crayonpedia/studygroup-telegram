@@ -112,3 +112,13 @@ As mentioned in https://cloud.google.com/appengine/docs/python/tools/using-libra
 Then you can:
 
     dev_appserver.py .
+
+## Import the Person table
+
+CSV file must be created using LibreOffice. Excel will break it.
+
+You'll need to disable authorization once to import, then enable it again.
+ 
+    curl -v --compressed -F "csv=@E:\\Dropbox (Personal)\\S3\\LPDP_PK85\\pk85-for-chatbot.csv" http://localhost:8080/import_person
+
+For the live site, do the same but replace the host with the live site hostname.

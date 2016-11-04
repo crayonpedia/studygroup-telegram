@@ -13,6 +13,10 @@ handlers:
   login: admin
   script: main.app
 
+- url: /import_person
+  login: admin
+  script: main.app
+
 - url: .*
   script: main.app
 
