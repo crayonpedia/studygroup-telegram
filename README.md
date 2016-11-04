@@ -62,11 +62,20 @@ Instructions
 
    ![app.yaml](http://i.imgur.com/m9yRwNw.png)
 
-19. Open `main.py` file using a good text editor. Change the `YOUR_BOT_TOKEN_HERE` to the token you get from @botfather at step 6, and save the file.
+19. Create `config.yaml` file using a good text editor, using the template below. Change the `YOUR_BOT_TOKEN_HERE` below to the token you get from @botfather at step 6, and save the file.
 
-   ![main.py](http://i.imgur.com/oNFEdsp.png)
+        bot-token: YOUR_BOT_TOKEN_HERE
 
 20. Download Google App Engine SDK for Python from https://cloud.google.com/appengine/downloads and install it.
+
+## Deploying using gcloud Command Line
+
+21. In Command Prompt, run:
+
+        gcloud auth login
+        gcloud app deploy --project YOUR_PROJECT_ID
+
+## Deploying using GoogleAppEngineLauncher
 
 21. Run the GoogleAppEngineLauncher application.
 
@@ -77,6 +86,8 @@ Instructions
     ![app engine launcher](http://i.imgur.com/SXr2Tz2.png)
 
 24. Click `Deploy`, enter your Google credentials, and your app should be installed to Google's servers.
+
+## Test the chatbot
 
 25. Open your browser and go to https://`project-id`.appspot.com/me (replace `project-id` with the Project ID you set on step 16).
 
@@ -92,3 +103,12 @@ Instructions
 
 To customize the bot, edit the `main.py` starting from the `CUSTOMIZE FROM HERE` line. They are simple if-else statements. 
 
+## Running locally
+
+As mentioned in https://cloud.google.com/appengine/docs/python/tools/using-libraries-python-27#local_development , you need to install libraries locally site-wide (do **not** install to `lib/` subfolder):
+
+    pip install pillow
+
+Then you can:
+
+    dev_appserver.py .

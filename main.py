@@ -2,6 +2,7 @@ import StringIO
 import json
 import logging
 import random
+import yaml
 import urllib
 import urllib2
 
@@ -14,7 +15,15 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+try:
+    with open('config.yaml', 'r') as cfgstream:
+        config = yaml.load(cfgstream)
+except yaml.YAMLError as e:
+    logging.error("config.yaml is required, please see README.md")
+    raise
+
+TOKEN = config['bot-token']
+logging.info('bot-token: %s' % TOKEN)
 
 BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 
