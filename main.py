@@ -18,6 +18,16 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
+import requests
+import requests_toolbelt.adapters.appengine
+
+# Use the App Engine Requests adapter. This makes sure that Requests uses
+# URLFetch.
+requests_toolbelt.adapters.appengine.monkeypatch()
+
+# Dropbox
+#import dropbox
+
 try:
     with open('config.yaml', 'r') as cfgstream:
         config = yaml.load(cfgstream)
@@ -26,7 +36,9 @@ except yaml.YAMLError as e:
     raise
 
 TOKEN = config['bot-token']
-logging.info('bot-token: %s' % TOKEN)
+dropboxAccessToken = config['dropboxAccessToken']
+dropboxFolder = config['dropboxFolder']
+# logging.info('bot-token: %s' % TOKEN)
 
 BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 
@@ -218,6 +230,51 @@ class ImportPersonHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(resp))
 
 
+def dropbox_search(q):
+    logging.info("Searching Dropbox for '%s' ..." % q)
+    # http://stackoverflow.com/a/36938507/122441
+    args = {
+        'path': dropboxFolder,
+        'query': q,
+        'max_results': 10,
+        'mode': 'filename'
+    }
+
+    headers = {
+        'Authorization': 'Bearer {}'.format(dropboxAccessToken),
+        #'Dropbox-API-Arg': json.dumps(args),
+        'Content-Type': 'application/json',
+    }
+
+    urlfetch.set_default_fetch_deadline(60)
+    request = urllib2.Request('https://api.dropboxapi.com/2/files/search', 
+        json.dumps(args), headers)
+    searchResults = json.load(urllib2.urlopen(request))
+    logging.info("Searching Dropbox for '%s' returned %s matches" % (q, len(searchResults['matches'])))
+    return searchResults
+
+class DropboxSearchHandler(webapp2.RequestHandler):
+    def get(self):
+        q = self.request.get('q').lower()
+        searchResults = dropbox_search(q)
+
+        # dbx = dropbox.Dropbox(dropboxAccessToken)
+        # user = dbx.users_get_current_account()
+        # logging.info("Dropbox User: %s" % user)
+        # files = dbx.files_search(dropboxFolder, q, max_results=10)
+
+        # self.response.headers['Content-Type'] = 'application/json'
+        logging.debug(json.dumps(searchResults))   
+        # self.response.write(json.dumps(searchResults))
+
+        s = ""
+        i = 0
+        for match in searchResults['matches']:
+            i = i + 1
+            s += "{}. {}\n".format(i, match['metadata']['path_display'].replace(dropboxFolder, "", 1))
+        self.response.headers['Content-Type'] = 'text/plain'   
+        self.response.write(s)
+
 class WebhookHandler(webapp2.RequestHandler):
     def post(self):
         urlfetch.set_default_fetch_deadline(60)
@@ -280,18 +337,20 @@ class WebhookHandler(webapp2.RequestHandler):
                 img.save(output, 'JPEG')
                 reply(img=output.getvalue())
             elif text.startswith('/whois ') or text.startswith('/whois@'):
-                q = text.split(' ', 1)[1].lower()
-                if len(q) < 4:
-                    reply("Search term must be at least 4 characters")
-                else:
-                    query = Person.query()
-                    rows = []
-                    for person in query.fetch(200):
-                        if q in person.name.lower():
-                            rows.append(person)
-                            logging.debug("Matched person: %s" % person)
-                    for person in rows:
-                        s = """{name}
+                splitted = text.split(' ', 1)
+                if len(splitted) >= 2:
+                    q = splitted[1].lower()
+                    if len(q) < 3:
+                        reply("Search term must be at least 3 characters")
+                    else:
+                        query = Person.query()
+                        rows = []
+                        for person in query.fetch(200):
+                            if q in person.name.lower():
+                                rows.append(person)
+                                logging.debug("Matched person: %s" % person)
+                        for person in rows:
+                            s = """{name}
 Kelompok: {groupName}
 No. Reg: {regCode}
 Jenis Kelamin: {gender}
@@ -308,7 +367,28 @@ Pekerjaan: {jobTitle}
 Universitas Asal: {prevProgramName}, {prevProgramSchool}, {prevProgramCity}, {prevProgramCountry}
 Universitas Tujuan: {nextProgramName}, {nextProgramSchool}, {nextProgramCity}, {nextProgramCountry}
 Beasiswa: {scholarshipKind}""".format(**person.to_dict())
+                            reply(s)
+                else:
+                    reply("Search term argument is required")
+            elif text.startswith('/dropboxsearch ') or text.startswith('/dropboxsearch@'):
+                splitted = text.split(' ', 1)
+                if len(splitted) >= 2:
+                    q = splitted[1].lower()
+                    if len(q) < 3:
+                        reply("Search term must be at least 3 characters")
+                    else:
+                        searchResults = dropbox_search(q)
+
+                        logging.debug(json.dumps(searchResults))   
+
+                        s = ""
+                        i = 0
+                        for match in searchResults['matches']:
+                            i = i + 1
+                            s += "{}. {}\n".format(i, match['metadata']['path_display'].replace(dropboxFolder, "", 1))
                         reply(s)
+                else:
+                    reply("Search term argument is required")
             else:
                 reply('What command?')
 
@@ -333,4 +413,5 @@ app = webapp2.WSGIApplication([
     ('/import_person', ImportPersonHandler),
     ('/export_person', ExportPersonHandler),
     ('/whois', WhoisHandler),
+    ('/dropboxsearch', DropboxSearchHandler),
 ], debug=True)

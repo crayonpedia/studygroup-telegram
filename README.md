@@ -122,3 +122,9 @@ You'll need to disable authorization once to import, then enable it again.
     curl -v --compressed -F "csv=@E:\\Dropbox (Personal)\\S3\\LPDP_PK85\\pk85-for-chatbot.csv" http://localhost:8080/import_person
 
 For the live site, do the same but replace the host with the live site hostname.
+
+## Dropbox / SSL Bug Fix Patch
+
+If you get error with RAND_egd
+
+Apply: https://code.google.com/p/googleappengine/issues/detail?id=12783

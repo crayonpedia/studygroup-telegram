@@ -1,1 +1,3 @@
 bot-token: "YOUR_BOT_TOKEN_HERE"
+dropboxAccessToken: "DROPBOX_ACCESS_TOKEN_HERE"
+dropboxFolder: "DROPBOX_FOLDER"
