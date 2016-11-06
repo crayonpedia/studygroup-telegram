@@ -386,15 +386,15 @@ Beasiswa: {scholarshipKind}""".format(**person.to_dict())
 
         # CUSTOMIZE FROM HERE
 
-        elif 'who are you' in text:
-            reply('telebot starter kit, created by yukuku: https://github.com/yukuku/telebot')
-        elif 'what time' in text:
-            reply('look at the corner of your screen!')
-        else:
-            if getEnabled(chat_id):
-                #logging.info('I got your message! (but I do not know how to answer)')
-            else:
-                logging.info('not enabled for chat_id {}'.format(chat_id))
+        # elif 'who are you' in text:
+        #     reply('telebot starter kit, created by yukuku: https://github.com/yukuku/telebot')
+        # elif 'what time' in text:
+        #     reply('look at the corner of your screen!')
+        # else:
+        #     if getEnabled(chat_id):
+        #         #logging.info('I got your message! (but I do not know how to answer)')
+        #     else:
+        #         logging.info('not enabled for chat_id {}'.format(chat_id))
 
 
 app = webapp2.WSGIApplication([
