@@ -149,7 +149,7 @@ class WhoisHandler(webapp2.RequestHandler):
         for person in query.fetch(200):
             if q in person.name.lower():
                 rows.append(person)
-                logging.info("Matched Person: %s" % person)
+                logging.info("Matched Person: %s", person)
                 s = """{name}
 Kelompok: {groupName}
 No. Reg: {regCode}
@@ -224,14 +224,14 @@ class ImportPersonHandler(webapp2.RequestHandler):
                 nextProgramName=row[34],
                 scholarshipKind=row[35],
                 admissionDate=row[36])
-            logging.info("Adding: %s" % person)
+            logging.info("Adding: %s", person)
             person.put()
         logging.info("Added all Person")
         self.response.write(json.dumps(resp))
 
 
 def dropbox_search(q):
-    logging.info("Searching Dropbox for '%s' ..." % q)
+    logging.info("Searching Dropbox for '%s' ...", q)
     # http://stackoverflow.com/a/36938507/122441
     args = {
         'path': dropboxFolder,
@@ -250,7 +250,7 @@ def dropbox_search(q):
     request = urllib2.Request('https://api.dropboxapi.com/2/files/search', 
         json.dumps(args), headers)
     searchResults = json.load(urllib2.urlopen(request))
-    logging.info("Searching Dropbox for '%s' returned %s matches" % (q, len(searchResults['matches'])))
+    logging.info("Searching Dropbox for '%s' returned %s matches", q, len(searchResults['matches']))
     return searchResults
 
 class DropboxSearchHandler(webapp2.RequestHandler):
@@ -279,8 +279,7 @@ class WebhookHandler(webapp2.RequestHandler):
     def post(self):
         urlfetch.set_default_fetch_deadline(60)
         body = json.loads(self.request.body)
-        logging.info('request body:')
-        logging.info(body)
+        logging.info('request body: %s', json.dumps(body))
         self.response.write(json.dumps(body))
 
         update_id = body['update_id']
@@ -318,8 +317,7 @@ class WebhookHandler(webapp2.RequestHandler):
                 logging.error('no msg or img specified')
                 resp = None
 
-            logging.info('send response:')
-            logging.info(resp)
+            logging.info('send response: %s', resp)
 
         if text.startswith('/'):
             if text == '/start':
@@ -368,8 +366,6 @@ Universitas Asal: {prevProgramName}, {prevProgramSchool}, {prevProgramCity}, {pr
 Universitas Tujuan: {nextProgramName}, {nextProgramSchool}, {nextProgramCity}, {nextProgramCountry}
 Beasiswa: {scholarshipKind}""".format(**person.to_dict())
                             reply(s)
-                else:
-                    reply("Search term argument is required")
             elif text.startswith('/dropboxsearch ') or text.startswith('/dropboxsearch@'):
                 splitted = text.split(' ', 1)
                 if len(splitted) >= 2:
@@ -387,10 +383,6 @@ Beasiswa: {scholarshipKind}""".format(**person.to_dict())
                             i = i + 1
                             s += "{}. {}\n".format(i, match['metadata']['path_display'].replace(dropboxFolder, "", 1))
                         reply(s)
-                else:
-                    reply("Search term argument is required")
-            else:
-                reply('What command?')
 
         # CUSTOMIZE FROM HERE
 
@@ -400,7 +392,7 @@ Beasiswa: {scholarshipKind}""".format(**person.to_dict())
             reply('look at the corner of your screen!')
         else:
             if getEnabled(chat_id):
-                reply('I got your message! (but I do not know how to answer)')
+                #logging.info('I got your message! (but I do not know how to answer)')
             else:
                 logging.info('not enabled for chat_id {}'.format(chat_id))
 
