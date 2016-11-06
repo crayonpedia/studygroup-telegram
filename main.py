@@ -382,7 +382,15 @@ Beasiswa: {scholarshipKind}""".format(**person.to_dict())
                         for match in searchResults['matches']:
                             i = i + 1
                             s += "{}. {}\n".format(i, match['metadata']['path_display'].replace(dropboxFolder, "", 1))
-                        reply(s)
+                        if s:
+                            reply(s)
+                        else:
+                            reply("No results for Dropbox search '%s'" % q)
+            elif text == '/groupinfo' or text.startswith('/groupinfo@'):
+                urlfetch.set_default_fetch_deadline(60)
+                chatFull = json.load(urllib2.urlopen(BASE_URL + 'messages.getFullChat', urllib.urlencode({'chat_id': chat_id})))
+                logging.info('Chat full: %s', json.dumps(chatFull))
+                
 
         # CUSTOMIZE FROM HERE
 
