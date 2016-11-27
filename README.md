@@ -1,3 +1,7 @@
+# DEPRECATED!
+
+**Replaced by** https://github.com/fast4indonesia/yoopabot
+
 # telebot
 Telegram Bot starter kit. Very easy to install with Google App Engine.
 

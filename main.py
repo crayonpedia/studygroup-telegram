@@ -49,6 +49,10 @@ class EnableStatus(ndb.Model):
     # key name: str(chat_id)
     enabled = ndb.BooleanProperty(indexed=False, default=False)
 
+class UserPerson(ndb.Model):
+    # key name: str(user_id)
+    name = ndb.StringProperty()
+
 
 # ================================
 
